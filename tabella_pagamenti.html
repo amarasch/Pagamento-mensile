@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabella Pagamenti</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="button-container">
+        <button id="openPaymentModal" class="add-payment-btn">Aggiungi Pagamento</button>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome lupetto</th>
+                    <th>Nome genitore</th>
+                    <th>Numero di telefono</th>
+                    <th>Gennaio</th>
+                    <th>Febbraio</th>
+                    <th>Marzo</th>
+                    <th>Aprile</th>
+                    <th>Maggio</th>
+                    <th>Giugno</th>
+                    <th>Totale Pagato</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Generate 31 empty rows -->
+                <tr><td>FRANCESCO</td><td>Antonio</td><td>+3407265193</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                <!-- ... [Previous rows remain the same] ... -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Payment Input Modal -->
+    <div id="paymentInputModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Inserisci Nuovo Pagamento</h2>
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label for="selectLupetto">Seleziona Lupetto:</label>
+                    <select id="selectLupetto" required>
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="selectMese">Seleziona Mese:</label>
+                    <select id="selectMese" required>
+                        <option value="3">Gennaio</option>
+                        <option value="4">Febbraio</option>
+                        <option value="5">Marzo</option>
+                        <option value="6">Aprile</option>
+                        <option value="7">Maggio</option>
+                        <option value="8">Giugno</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="importo">Importo:</label>
+                    <input type="number" id="importo" min="5" step="0.01" required>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="confirm-btn">Conferma</button>
+                    <button type="button" class="cancel-btn">Annulla</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script src="payment-table.js"></script>
+</body>
+</html>
