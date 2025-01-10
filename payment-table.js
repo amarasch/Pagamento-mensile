@@ -213,3 +213,46 @@ function showConfirmDialog(message, title) {
         resolve(confirmed);
     });
 }
+
+// Aggiungi funzionalità di ricerca alla tabella
+
+document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.placeholder = 'Cerca...';
+    searchInput.id = 'searchInput';
+    searchInput.style.margin = '10px';
+    searchInput.style.padding = '8px';
+    searchInput.style.width = '80%';
+    searchInput.style.fontSize = '16px';
+    searchInput.style.border = '1px solid #ddd';
+    searchInput.style.borderRadius = '4px';
+
+    const tableContainer = document.querySelector('.table-container');
+    tableContainer.insertBefore(searchInput, tableContainer.firstChild);
+
+    searchInput.addEventListener('input', () => {
+        const filter = searchInput.value.toLowerCase();
+        const rows = document.querySelectorAll('tbody tr');
+
+        rows.forEach(row => {
+            const cells = Array.from(row.querySelectorAll('td'));
+            const match = cells.some(cell => cell.textContent.toLowerCase().includes(filter));
+            row.style.display = match ? '' : 'none';
+        });
+    });
+
+    // Stili CSS per ottimizzazione mobile
+    const styleTag = document.createElement('style');
+    styleTag.textContent = `
+        @media screen and (max-width: 768px) {
+            #searchInput {
+                width: 100%;
+                margin: 10px 0;
+                font-size: 14px;
+                padding: 10px;
+            }
+        }
+    `;
+    document.head.appendChild(styleTag);
+});
