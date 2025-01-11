@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeTable();
     initializeModal();
     loadSavedData();
-    setupSendChangesButton();
 });
 
 function setupSendChangesButton() {
@@ -31,40 +30,44 @@ function setupSendChangesButton() {
     buttonContainer.appendChild(button);
 }
 
-function saveToLocalStorage(row, cellIndex, value) {
-    const storage = JSON.parse(localStorage.getItem('paymentData') || '{}');
-    const nomeLupetto = row.cells[0].textContent;
-    const nomeGenitore = row.cells[1].textContent;
-    const mese = document.querySelector(`table thead th:nth-child(${cellIndex + 1})`).textContent;
-    
-    if (!storage[nomeLupetto]) {
-        storage[nomeLupetto] = {};
-    }
-    
-    storage[nomeLupetto][mese] = value;
-    localStorage.setItem('paymentData', JSON.stringify(storage));
-    
-    // Add to modifiche array
-    modifiche.push({
-        nomeLupetto,
-        nomeGenitore,
-        mese,
-        importo: value
+function saveToLocalStorage() {
+    const table = document.querySelector('table');
+    const rows = table.querySelectorAll('tbody tr');
+    const data = {};
+
+    rows.forEach(row => {
+        const nomeLupetto = row.cells[0].textContent;
+        const pagamenti = {};
+        
+        // Save payments for each month (columns 3-8)
+        for (let i = 3; i <= 8; i++) {
+            const mese = table.querySelector(`thead th:nth-child(${i + 1})`).textContent;
+            const value = row.cells[i].textContent.replace('€', '').trim();
+            if (value) {
+                pagamenti[mese] = value;
+            }
+        }
+        
+        if (Object.keys(pagamenti).length > 0) {
+            data[nomeLupetto] = pagamenti;
+        }
     });
+
+    localStorage.setItem('paymentData', JSON.stringify(data));
 }
 
 function loadSavedData() {
-    const storage = JSON.parse(localStorage.getItem('paymentData') || '{}');
+    const data = JSON.parse(localStorage.getItem('tableData') || '{}');
     const table = document.querySelector('table');
     const rows = table.querySelectorAll('tbody tr');
     
     rows.forEach(row => {
         const nomeLupetto = row.cells[0].textContent;
-        const savedData = storage[nomeLupetto];
+        const savedData = data[nomeLupetto];
         
         if (savedData) {
             Object.entries(savedData).forEach(([mese, value]) => {
-                const cellIndex = Array.from(row.parentElement.parentElement.querySelector('thead tr').cells)
+                const cellIndex = Array.from(table.querySelector('thead tr').cells)
                     .findIndex(cell => cell.textContent === mese);
                 
                 if (cellIndex >= 0) {
@@ -76,7 +79,10 @@ function loadSavedData() {
     });
 }
 
+
 async function inviaModifiche() {
+    const modifiche = getStoredModifiche();
+    
     if (modifiche.length === 0) {
         alert('Non ci sono modifiche da inviare.');
         return;
@@ -94,34 +100,37 @@ async function inviaModifiche() {
 
     if (confirmed) {
         apriMessaggioSMS(ADMIN_PHONE, messaggio);
-        modifiche = []; // Clear the changes after sending
+        // Opzionale: pulisci le modifiche dopo l'invio
+        // localStorage.setItem('modifiche', '[]');
     }
 }
 
-
 function initializeTable() {
     const table = document.querySelector('table');
-    
-    // Add click event listeners to all cells
     table.addEventListener('click', (event) => {
         const cell = event.target;
         if (cell.tagName === 'TD') {
             const cellIndex = cell.cellIndex;
-            // Only make payment cells editable (columns 4-9, index 3-8)
             if (cellIndex >= 3 && cellIndex <= 8) {
                 makeEditable(cell);
             }
         }
     });
+}
 
-    // Initialize empty cells with click-to-edit functionality
-    const cells = table.querySelectorAll('td');
-    cells.forEach(cell => {
-        const cellIndex = cell.cellIndex;
-        if (cellIndex >= 3 && cellIndex <= 8) {
-            cell.setAttribute('title', 'Clicca per inserire un pagamento');
-        }
+function getStoredModifiche() {
+    return JSON.parse(localStorage.getItem('modifiche') || '[]');
+}
+
+function saveModifica(nomeLupetto, nomeGenitore, mese, importo) {
+    let modifiche = getStoredModifiche();
+    modifiche.push({
+        nomeLupetto,
+        nomeGenitore,
+        mese,
+        importo
     });
+    localStorage.setItem('modifiche', JSON.stringify(modifiche));
 }
 
 function makeEditable(cell) {
@@ -144,6 +153,7 @@ function makeEditable(cell) {
             if (value > QUOTA_MINIMA) {
                 const row = cell.parentElement;
                 const nomeLupetto = row.cells[0].textContent;
+                const nomeGenitore = row.cells[1].textContent;
                 const telefono = row.cells[2].textContent;
                 const mese = document.querySelector(`table thead th:nth-child(${cell.cellIndex + 1})`).textContent;
 
@@ -154,7 +164,13 @@ function makeEditable(cell) {
 
                 if (confirmed) {
                     cell.textContent = `€${value}`;
-                    saveToLocalStorage(row, cell.cellIndex, value);
+                    
+                    // Salva la modifica
+                    saveModifica(nomeLupetto, nomeGenitore, mese, value);
+                    
+                    // Salva i dati della tabella
+                    saveTableData();
+                    
                     const messaggio = `Confermato il pagamento della quota di €${value} per ${nomeLupetto} per il mese di ${mese}. Grazie!`;
                     if (telefono) {
                         apriMessaggioSMS(telefono, messaggio);
@@ -172,7 +188,6 @@ function makeEditable(cell) {
         }
     });
 
-
     input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             input.blur();
@@ -183,28 +198,26 @@ function makeEditable(cell) {
     });
 }
 
+
 function initializeModal() {
-    // Get modal elements
     paymentModal = document.getElementById('paymentInputModal');
     paymentForm = document.getElementById('paymentForm');
     lupettoSelect = document.getElementById('selectLupetto');
     meseSelect = document.getElementById('selectMese');
     importoInput = document.getElementById('importo');
 
-    // Add event listeners
     document.getElementById('openPaymentModal').addEventListener('click', openModal);
     document.querySelector('.close-button').addEventListener('click', closeModal);
     document.querySelector('.cancel-btn').addEventListener('click', closeModal);
+    document.getElementById('sendChangesBtn').addEventListener('click', inviaModifiche);
     paymentForm.addEventListener('submit', handlePaymentSubmit);
 
-    // Close modal when clicking outside
     window.addEventListener('click', (event) => {
         if (event.target === paymentModal) {
             closeModal();
         }
     });
 
-    // Populate lupetto select options
     populateLupettoOptions();
 }
 
@@ -235,6 +248,59 @@ function closeModal() {
     paymentForm.reset();
 }
 
+function saveTableData() {
+    const table = document.querySelector('table');
+    const data = {};
+    const rows = table.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const nomeLupetto = row.cells[0].textContent;
+        const pagamenti = {};
+        
+        // Salva i pagamenti per ogni mese (colonne 3-8)
+        for (let i = 3; i <= 8; i++) {
+            const cellContent = row.cells[i].textContent.trim();
+            if (cellContent) {
+                const mese = table.querySelector(`thead th:nth-child(${i + 1})`).textContent;
+                pagamenti[mese] = cellContent.replace('€', '');
+            }
+        }
+        
+        if (Object.keys(pagamenti).length > 0) {
+            data[nomeLupetto] = pagamenti;
+        }
+    });
+    
+    localStorage.setItem('tableData', JSON.stringify(data));
+}
+
+
+function saveTableData() {
+    const table = document.querySelector('table');
+    const data = {};
+    const rows = table.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const nomeLupetto = row.cells[0].textContent;
+        const pagamenti = {};
+        
+        // Salva i pagamenti per ogni mese (colonne 3-8)
+        for (let i = 3; i <= 8; i++) {
+            const cellContent = row.cells[i].textContent.trim();
+            if (cellContent) {
+                const mese = table.querySelector(`thead th:nth-child(${i + 1})`).textContent;
+                pagamenti[mese] = cellContent.replace('€', '');
+            }
+        }
+        
+        if (Object.keys(pagamenti).length > 0) {
+            data[nomeLupetto] = pagamenti;
+        }
+    });
+    
+    localStorage.setItem('tableData', JSON.stringify(data));
+}
+
 async function handlePaymentSubmit(event) {
     event.preventDefault();
 
@@ -249,6 +315,7 @@ async function handlePaymentSubmit(event) {
 
     const row = document.querySelector('table tbody').children[lupettoIndex];
     const nomeLupetto = row.cells[0].textContent;
+    const nomeGenitore = row.cells[1].textContent;
     const telefono = row.cells[2].textContent;
     const mese = document.querySelector(`table thead th:nth-child(${meseIndex + 1})`).textContent;
 
@@ -258,33 +325,33 @@ async function handlePaymentSubmit(event) {
     );
 
     if (confirmed) {
-        // Update cell value with € symbol
         row.cells[meseIndex].textContent = `€${importo}`;
+        
+        // Salva la modifica
+        saveModifica(nomeLupetto, nomeGenitore, mese, importo);
+        
+        // Salva i dati della tabella
+        saveTableData();
 
-        // Send confirmation message
         const messaggio = `Confermato il pagamento della quota di €${importo} per ${nomeLupetto} per il mese di ${mese}. Grazie!`;
         if (telefono) {
             apriMessaggioSMS(telefono, messaggio);
         }
 
-        // Calculate new total
         calcolaTotale(row);
         closeModal();
     }
 }
 
+
 function calcolaTotale(row) {
     let totale = 0;
-    
-    // Sum all payments (columns 4-9)
     for (let i = 3; i <= 8; i++) {
         const value = parseFloat(row.cells[i].textContent.replace('€', ''));
         if (!isNaN(value)) {
             totale += value;
         }
     }
-    
-    // Update total column (column 10) with € symbol
     row.cells[9].textContent = `€${totale}`;
 }
 
@@ -300,7 +367,6 @@ function showConfirmDialog(message, title) {
         resolve(confirmed);
     });
 }
-
 // Aggiungi funzionalità di ricerca alla tabella
 
 document.addEventListener('DOMContentLoaded', () => {
