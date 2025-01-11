@@ -3,48 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Tabella Pagamenti Lupetti">
+    <meta name="theme-color" content="#FFD700">
     <title>Tabella Pagamenti</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="button-container">
-        <button id="openPaymentModal" class="add-payment-btn">Aggiungi Pagamento</button>
-    </div>
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Nome lupetto</th>
-                    <th>Nome genitore</th>
-                    <th>Numero di telefono</th>
-                    <th>Gennaio</th>
-                    <th>Febbraio</th>
-                    <th>Marzo</th>
-                    <th>Aprile</th>
-                    <th>Maggio</th>
-                    <th>Giugno</th>
-                    <th>Totale Pagato</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Genera 31 righe -->
-                <tr>
-                    <td data-label="Nome lupetto">Francesco</td>
-                    <td data-label="Nome genitore">Antonio</td>
-                    <td data-label="Numero di telefono">+393348214075</td>
-                    <td data-label="Gennaio"></td>
-                    <td data-label="Febbraio"></td>
-                    <td data-label="Marzo"></td>
-                    <td data-label="Aprile"></td>
-                    <td data-label="Maggio"></td>
-                    <td data-label="Giugno"></td>
-                    <td data-label="Totale Pagato"></td>
-                </tr>
-                <!-- Ripeti il blocco sopra per altre 30 righe -->
-                <!-- ... -->
-            </tbody>
-        </table>
-    </div>
+    <header>
+        <div class="button-container">
+            <button id="openPaymentModal" class="add-payment-btn">Aggiungi Pagamento</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome lupetto</th>
+                        <th>Nome genitore</th>
+                        <th>Numero di telefono</th>
+                        <th>Gennaio</th>
+                        <th>Febbraio</th>
+                        <th>Marzo</th>
+                        <th>Aprile</th>
+                        <th>Maggio</th>
+                        <th>Giugno</th>
+                        <th>Totale Pagato</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td data-label="Nome lupetto">Francesco</td>
+                        <td data-label="Nome genitore">Antonio</td>
+                        <td data-label="Numero di telefono">+393348214075</td>
+                        <td data-label="Gennaio"></td>
+                        <td data-label="Febbraio"></td>
+                        <td data-label="Marzo"></td>
+                        <td data-label="Aprile"></td>
+                        <td data-label="Maggio"></td>
+                        <td data-label="Giugno"></td>
+                        <td data-label="Totale Pagato"></td>
+                    </tr>
+                    <tr>
+                        <td data-label="Nome lupetto">Giuseppe</td>
+                        <td data-label="Nome genitore">Antonio</td>
+                        <td data-label="Numero di telefono">+393348214075</td>
+                        <td data-label="Gennaio"></td>
+                        <td data-label="Febbraio"></td>
+                        <td data-label="Marzo"></td>
+                        <td data-label="Aprile"></td>
+                        <td data-label="Maggio"></td>
+                        <td data-label="Giugno"></td>
+                        <td data-label="Totale Pagato"></td>
+                    </tr>
+                    <tr>
+                        <td data-label="Nome lupetto">Franco</td>
+                        <td data-label="Nome genitore">Antonio</td>
+                        <td data-label="Numero di telefono">+393348214075</td>
+                        <td data-label="Gennaio"></td>
+                        <td data-label="Febbraio"></td>
+                        <td data-label="Marzo"></td>
+                        <td data-label="Aprile"></td>
+                        <td data-label="Maggio"></td>
+                        <td data-label="Giugno"></td>
+                        <td data-label="Totale Pagato"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
 
     <!-- Payment Input Modal -->
     <div id="paymentInputModal" class="modal">
@@ -80,6 +108,7 @@
             </form>
         </div>
     </div>
+
     <script src="payment-table.js"></script>
 </body>
 </html>

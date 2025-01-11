@@ -117,7 +117,6 @@ tbody tr:hover td {
     background-color: #45a049;
 }
 
-/* Modal */
 .modal {
     display: none;
     position: fixed;
@@ -132,10 +131,112 @@ tbody tr:hover td {
 .modal-content {
     position: relative;
     background-color: #fefefe;
+    margin: 15% auto;
     margin: 10% auto;
     padding: 20px;
+    border-radius: 5px;
+    width: 80%;
+    max-width: 500px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+}
+.close-button:hover {
+    color: #000;
+}
+/* Form styles */
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.form-group select,
+.form-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+.form-buttons {
+    text-align: right;
+    margin-top: 20px;
+}
+.confirm-btn,
+.cancel-btn {
+    padding: 8px 16px;
+    margin-left: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.confirm-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+.cancel-btn {
+    background-color: #f44336;
+    color: white;
+}
+.confirm-btn:hover {
+    background-color: #45a049;
+}
+.cancel-btn:hover {
+    background-color: #da190b;
     border-radius: 8px;
     width: 90%;
     max-width: 400px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+/* Responsive styles */
+@media screen and (max-width: 768px) {
+    .modal-content {
+        width: 80%;
+        margin: 10% auto;
+    }
+    
+    .form-buttons button {
+        width: 100%;
+        margin: 5px 0;
+    }
+}
+
+.send-changes-btn {
+    padding: 12px 20px;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-left: 10px;
+}
+
+.send-changes-btn:hover {
+    background-color: #1976D2;
+}
+
+@media screen and (max-width: 768px) {
+    .button-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .add-payment-btn,
+    .send-changes-btn {
+        width: 100%;
+        margin: 0;
+    }
 }

@@ -1,5 +1,6 @@
 // Constants
 const QUOTA_MINIMA = 5;
+const ADMIN_PHONE = "+393407265193"; // Add the specific number here
 
 // DOM Elements
 let paymentModal;
@@ -8,11 +9,95 @@ let lupettoSelect;
 let meseSelect;
 let importoInput;
 
+// Track changes
+let modifiche = [];
+
 // Initialize when the document is ready
 document.addEventListener('DOMContentLoaded', () => {
     initializeTable();
     initializeModal();
+    loadSavedData();
+    setupSendChangesButton();
 });
+
+function setupSendChangesButton() {
+    const button = document.createElement('button');
+    button.id = 'sendChangesBtn';
+    button.className = 'send-changes-btn';
+    button.textContent = 'Invia Modifiche';
+    button.onclick = inviaModifiche;
+    
+    const buttonContainer = document.querySelector('.button-container');
+    buttonContainer.appendChild(button);
+}
+
+function saveToLocalStorage(row, cellIndex, value) {
+    const storage = JSON.parse(localStorage.getItem('paymentData') || '{}');
+    const nomeLupetto = row.cells[0].textContent;
+    const nomeGenitore = row.cells[1].textContent;
+    const mese = document.querySelector(`table thead th:nth-child(${cellIndex + 1})`).textContent;
+    
+    if (!storage[nomeLupetto]) {
+        storage[nomeLupetto] = {};
+    }
+    
+    storage[nomeLupetto][mese] = value;
+    localStorage.setItem('paymentData', JSON.stringify(storage));
+    
+    // Add to modifiche array
+    modifiche.push({
+        nomeLupetto,
+        nomeGenitore,
+        mese,
+        importo: value
+    });
+}
+
+function loadSavedData() {
+    const storage = JSON.parse(localStorage.getItem('paymentData') || '{}');
+    const table = document.querySelector('table');
+    const rows = table.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const nomeLupetto = row.cells[0].textContent;
+        const savedData = storage[nomeLupetto];
+        
+        if (savedData) {
+            Object.entries(savedData).forEach(([mese, value]) => {
+                const cellIndex = Array.from(row.parentElement.parentElement.querySelector('thead tr').cells)
+                    .findIndex(cell => cell.textContent === mese);
+                
+                if (cellIndex >= 0) {
+                    row.cells[cellIndex].textContent = `€${value}`;
+                }
+            });
+            calcolaTotale(row);
+        }
+    });
+}
+
+async function inviaModifiche() {
+    if (modifiche.length === 0) {
+        alert('Non ci sono modifiche da inviare.');
+        return;
+    }
+
+    let messaggio = 'Riepilogo Pagamenti:\n\n';
+    modifiche.forEach(modifica => {
+        messaggio += `${modifica.nomeLupetto} (${modifica.nomeGenitore}): €${modifica.importo} per ${modifica.mese}\n`;
+    });
+
+    const confirmed = await showConfirmDialog(
+        'Vuoi inviare tutte le modifiche tramite SMS?',
+        'Conferma Invio'
+    );
+
+    if (confirmed) {
+        apriMessaggioSMS(ADMIN_PHONE, messaggio);
+        modifiche = []; // Clear the changes after sending
+    }
+}
+
 
 function initializeTable() {
     const table = document.querySelector('table');
@@ -69,6 +154,7 @@ function makeEditable(cell) {
 
                 if (confirmed) {
                     cell.textContent = `€${value}`;
+                    saveToLocalStorage(row, cell.cellIndex, value);
                     const messaggio = `Confermato il pagamento della quota di €${value} per ${nomeLupetto} per il mese di ${mese}. Grazie!`;
                     if (telefono) {
                         apriMessaggioSMS(telefono, messaggio);
@@ -85,6 +171,7 @@ function makeEditable(cell) {
             cell.textContent = originalContent;
         }
     });
+
 
     input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
