@@ -80,6 +80,21 @@ function loadSavedData() {
 }
 
 
+// Modifica la funzione apriMessaggioSMS per usare WhatsApp
+function apriMessaggioWhatsApp(numeroDestinatario, messaggio) {
+    // Rimuovi eventuali spazi o caratteri speciali dal numero
+    const numeroFormattato = numeroDestinatario.replace(/\s+/g, '');
+    // Rimuovi il + iniziale se presente
+    const numeroPulito = numeroFormattato.replace('+', '');
+    
+    // Crea il link per WhatsApp
+    const encodedMessage = encodeURIComponent(messaggio);
+    const whatsappUrl = `https://wa.me/${numeroPulito}?text=${encodedMessage}`;
+    
+    // Apri WhatsApp in una nuova finestra
+    window.open(whatsappUrl, '_blank');
+}
+
 async function inviaModifiche() {
     const modifiche = getStoredModifiche();
     
@@ -88,18 +103,19 @@ async function inviaModifiche() {
         return;
     }
 
-    let messaggio = 'Riepilogo Pagamenti:\n\n';
+    let messaggio = '*Riepilogo Pagamenti:*\n\n';
     modifiche.forEach(modifica => {
-        messaggio += `${modifica.nomeLupetto} (${modifica.nomeGenitore}): €${modifica.importo} per ${modifica.mese}\n`;
+        // Uso la formattazione di WhatsApp per il testo
+        messaggio += `*${modifica.nomeLupetto}* (${modifica.nomeGenitore}): €${modifica.importo} per ${modifica.mese}\n`;
     });
 
     const confirmed = await showConfirmDialog(
-        'Vuoi inviare tutte le modifiche tramite SMS?',
+        'Vuoi inviare tutte le modifiche tramite WhatsApp?',
         'Conferma Invio'
     );
 
     if (confirmed) {
-        apriMessaggioSMS(ADMIN_PHONE, messaggio);
+        apriMessaggioWhatsApp(ADMIN_PHONE, messaggio);
         // Opzionale: pulisci le modifiche dopo l'invio
         // localStorage.setItem('modifiche', '[]');
     }
@@ -171,9 +187,9 @@ function makeEditable(cell) {
                     // Salva i dati della tabella
                     saveTableData();
                     
-                    const messaggio = `Confermato il pagamento della quota di €${value} per ${nomeLupetto} per il mese di ${mese}. Grazie!`;
+                    const messaggio = `*Conferma Pagamento*\nQuota di €${value} per ${nomeLupetto} per il mese di ${mese}. Grazie!`;
                     if (telefono) {
-                        apriMessaggioSMS(telefono, messaggio);
+                        apriMessaggioWhatsApp(telefono, messaggio);
                     }
                     calcolaTotale(row);
                 } else {
@@ -187,7 +203,7 @@ function makeEditable(cell) {
             cell.textContent = originalContent;
         }
     });
-
+    
     input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             input.blur();
@@ -327,22 +343,18 @@ async function handlePaymentSubmit(event) {
     if (confirmed) {
         row.cells[meseIndex].textContent = `€${importo}`;
         
-        // Salva la modifica
         saveModifica(nomeLupetto, nomeGenitore, mese, importo);
-        
-        // Salva i dati della tabella
         saveTableData();
 
-        const messaggio = `Confermato il pagamento della quota di €${importo} per ${nomeLupetto} per il mese di ${mese}. Grazie!`;
+        const messaggio = `*Conferma Pagamento*\nQuota di €${importo} per ${nomeLupetto} per il mese di ${mese}. Grazie!`;
         if (telefono) {
-            apriMessaggioSMS(telefono, messaggio);
+            apriMessaggioWhatsApp(telefono, messaggio);
         }
 
         calcolaTotale(row);
         closeModal();
     }
 }
-
 
 function calcolaTotale(row) {
     let totale = 0;
