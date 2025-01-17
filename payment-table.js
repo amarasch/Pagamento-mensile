@@ -1,5 +1,5 @@
 // Constants
-const QUOTA_MINIMA = 5;
+const QUOTA_MINIMA = 4;
 const ADMIN_PHONE = "+393407265193"; // Add the specific number here
 
 // DOM Elements
@@ -8,15 +8,18 @@ let paymentForm;
 let lupettoSelect;
 let meseSelect;
 let importoInput;
+let quotaCancelleriaInput;
+let quotaVDBInput;
 
 // Track changes
 let modifiche = [];
 
 // Initialize when the document is ready
 document.addEventListener('DOMContentLoaded', () => {
-    initializeTable();
     initializeModal();
     loadSavedData();
+    quotaCancelleriaInput = document.getElementById('quotaCancelleria');
+    quotaVDBInput = document.getElementById('quotaVDB');
 });
 
 function setupSendChangesButton() {
@@ -58,27 +61,32 @@ function saveToLocalStorage() {
 
 function loadSavedData() {
     const data = JSON.parse(localStorage.getItem('tableData') || '{}');
-    const table = document.querySelector('table');
-    const rows = table.querySelectorAll('tbody tr');
-    
-    rows.forEach(row => {
-        const nomeLupetto = row.cells[0].textContent;
-        const savedData = data[nomeLupetto];
-        
-        if (savedData) {
-            Object.entries(savedData).forEach(([mese, value]) => {
-                const cellIndex = Array.from(table.querySelector('thead tr').cells)
-                    .findIndex(cell => cell.textContent === mese);
-                
-                if (cellIndex >= 0) {
-                    row.cells[cellIndex].textContent = `€${value}`;
-                }
-            });
-            calcolaTotale(row);
-        }
-    });
-}
+    const tables = {
+        principale: document.querySelector('table'),
+        mensili: document.querySelector('.quote-mensili'),
+        vdb: document.querySelector('.quote-vdb')
+    };
 
+    for (let [key, table] of Object.entries(tables)) {
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const nomeLupetto = row.cells[0].textContent;
+            const savedData = data[key]?.[nomeLupetto];
+            
+            if (savedData) {
+                Object.entries(savedData).forEach(([mese, value]) => {
+                    const cellIndex = Array.from(table.querySelector('thead tr').cells)
+                        .findIndex(cell => cell.textContent === mese);
+                    
+                    if (cellIndex >= 0) {
+                        row.cells[cellIndex].textContent = `€${value}`;
+                    }
+                });
+                calcolaTotale(row);
+            }
+        });
+    }
+}
 
 // Modifica la funzione apriMessaggioSMS per usare WhatsApp
 function apriMessaggioWhatsApp(numeroDestinatario, messaggio) {
@@ -121,97 +129,22 @@ async function inviaModifiche() {
     }
 }
 
-function initializeTable() {
-    const table = document.querySelector('table');
-    table.addEventListener('click', (event) => {
-        const cell = event.target;
-        if (cell.tagName === 'TD') {
-            const cellIndex = cell.cellIndex;
-            if (cellIndex >= 3 && cellIndex <= 8) {
-                makeEditable(cell);
-            }
-        }
-    });
-}
 
 function getStoredModifiche() {
     return JSON.parse(localStorage.getItem('modifiche') || '[]');
 }
 
-function saveModifica(nomeLupetto, nomeGenitore, mese, importo) {
+function saveModifica(nomeLupetto, nomeGenitore, mese, importoTotale, quotaCancelleria, quotaVDB) {
     let modifiche = getStoredModifiche();
     modifiche.push({
         nomeLupetto,
         nomeGenitore,
         mese,
-        importo
+        importoTotale,
+        quotaCancelleria,
+        quotaVDB
     });
     localStorage.setItem('modifiche', JSON.stringify(modifiche));
-}
-
-function makeEditable(cell) {
-    const input = document.createElement('input');
-    input.type = 'number';
-    input.min = QUOTA_MINIMA;
-    input.step = '0.01';
-    input.value = cell.textContent.replace('€', '').trim();
-    input.style.width = '100%';
-    input.style.boxSizing = 'border-box';
-
-    const originalContent = cell.textContent;
-    cell.textContent = '';
-    cell.appendChild(input);
-    input.focus();
-
-    input.addEventListener('blur', async () => {
-        const value = parseFloat(input.value);
-        if (!isNaN(value)) {
-            if (value > QUOTA_MINIMA) {
-                const row = cell.parentElement;
-                const nomeLupetto = row.cells[0].textContent;
-                const nomeGenitore = row.cells[1].textContent;
-                const telefono = row.cells[2].textContent;
-                const mese = document.querySelector(`table thead th:nth-child(${cell.cellIndex + 1})`).textContent;
-
-                const confirmed = await showConfirmDialog(
-                    `Confermi l'inserimento della quota di €${value} per ${nomeLupetto}?`,
-                    "Conferma Pagamento"
-                );
-
-                if (confirmed) {
-                    cell.textContent = `€${value}`;
-                    
-                    // Salva la modifica
-                    saveModifica(nomeLupetto, nomeGenitore, mese, value);
-                    
-                    // Salva i dati della tabella
-                    saveTableData();
-                    
-                    const messaggio = `*Conferma Pagamento*\nQuota di €${value} per ${nomeLupetto} per il mese di ${mese}. Grazie!`;
-                    if (telefono) {
-                        apriMessaggioWhatsApp(telefono, messaggio);
-                    }
-                    calcolaTotale(row);
-                } else {
-                    cell.textContent = originalContent;
-                }
-            } else {
-                alert(`La quota mensile deve essere maggiore di €${QUOTA_MINIMA}.`);
-                cell.textContent = originalContent;
-            }
-        } else {
-            cell.textContent = originalContent;
-        }
-    });
-    
-    input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            input.blur();
-        }
-        if (e.key === 'Escape') {
-            cell.textContent = originalContent;
-        }
-    });
 }
 
 
@@ -265,67 +198,54 @@ function closeModal() {
 }
 
 function saveTableData() {
-    const table = document.querySelector('table');
-    const data = {};
-    const rows = table.querySelectorAll('tbody tr');
+    const tables = {
+        principale: document.querySelector('table'),
+        mensili: document.querySelector('.quote-mensili'),
+        vdb: document.querySelector('.quote-vdb')
+    };
     
-    rows.forEach(row => {
-        const nomeLupetto = row.cells[0].textContent;
-        const pagamenti = {};
-        
-        // Salva i pagamenti per ogni mese (colonne 3-8)
-        for (let i = 3; i <= 8; i++) {
-            const cellContent = row.cells[i].textContent.trim();
-            if (cellContent) {
+    const data = {
+        principale: {},
+        mensili: {},
+        vdb: {}
+    };
+
+    for (let [key, table] of Object.entries(tables)) {
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const nomeLupetto = row.cells[0].textContent;
+            const pagamenti = {};
+            
+            for (let i = 3; i <= 8; i++) {
                 const mese = table.querySelector(`thead th:nth-child(${i + 1})`).textContent;
-                pagamenti[mese] = cellContent.replace('€', '');
+                const value = row.cells[i].textContent.replace('€', '').trim();
+                if (value) {
+                    pagamenti[mese] = value;
+                }
             }
-        }
-        
-        if (Object.keys(pagamenti).length > 0) {
-            data[nomeLupetto] = pagamenti;
-        }
-    });
-    
+            
+            if (Object.keys(pagamenti).length > 0) {
+                data[key][nomeLupetto] = pagamenti;
+            }
+        });
+    }
+
     localStorage.setItem('tableData', JSON.stringify(data));
 }
 
 
-function saveTableData() {
-    const table = document.querySelector('table');
-    const data = {};
-    const rows = table.querySelectorAll('tbody tr');
-    
-    rows.forEach(row => {
-        const nomeLupetto = row.cells[0].textContent;
-        const pagamenti = {};
-        
-        // Salva i pagamenti per ogni mese (colonne 3-8)
-        for (let i = 3; i <= 8; i++) {
-            const cellContent = row.cells[i].textContent.trim();
-            if (cellContent) {
-                const mese = table.querySelector(`thead th:nth-child(${i + 1})`).textContent;
-                pagamenti[mese] = cellContent.replace('€', '');
-            }
-        }
-        
-        if (Object.keys(pagamenti).length > 0) {
-            data[nomeLupetto] = pagamenti;
-        }
-    });
-    
-    localStorage.setItem('tableData', JSON.stringify(data));
-}
 
 async function handlePaymentSubmit(event) {
     event.preventDefault();
 
     const lupettoIndex = parseInt(lupettoSelect.value);
     const meseIndex = parseInt(meseSelect.value);
-    const importo = parseFloat(importoInput.value);
+    const quotaCancelleria = parseFloat(quotaCancelleriaInput.value);
+    const quotaVDB = parseFloat(quotaVDBInput.value);
+    const importoTotale = quotaCancelleria + quotaVDB;
 
-    if (importo <= QUOTA_MINIMA) {
-        alert(`La quota mensile deve essere maggiore di €${QUOTA_MINIMA}.`);
+    if (quotaCancelleria <= QUOTA_MINIMA || quotaVDB <= QUOTA_MINIMA) {
+        alert(`Ogni quota deve essere maggiore di €${QUOTA_MINIMA}.`);
         return;
     }
 
@@ -336,22 +256,33 @@ async function handlePaymentSubmit(event) {
     const mese = document.querySelector(`table thead th:nth-child(${meseIndex + 1})`).textContent;
 
     const confirmed = await showConfirmDialog(
-        `Confermi l'inserimento della quota di €${importo} per ${nomeLupetto}?`,
+        `Confermi l'inserimento delle quote:\nCancelleria: €${quotaCancelleria}\nVDB: €${quotaVDB}\nTotale: €${importoTotale}\nper ${nomeLupetto}?`,
         "Conferma Pagamento"
     );
 
     if (confirmed) {
-        row.cells[meseIndex].textContent = `€${importo}`;
+        // Aggiorna la tabella principale
+        row.cells[meseIndex].textContent = `€${importoTotale}`;
         
-        saveModifica(nomeLupetto, nomeGenitore, mese, importo);
+        // Aggiorna la tabella quote mensili
+        const rowMensili = document.querySelector('.quote-mensili tbody').children[lupettoIndex];
+        rowMensili.cells[meseIndex].textContent = `€${quotaCancelleria}`;
+        
+        // Aggiorna la tabella quote vdb
+        const rowVDB = document.querySelector('.quote-vdb tbody').children[lupettoIndex];
+        rowVDB.cells[meseIndex].textContent = `€${quotaVDB}`;
+        
+        saveModifica(nomeLupetto, nomeGenitore, mese, importoTotale, quotaCancelleria, quotaVDB);
         saveTableData();
 
-        const messaggio = `*Conferma Pagamento*\nQuota di €${importo} per ${nomeLupetto} per il mese di ${mese}. Grazie!`;
+        const messaggio = `*Conferma Pagamento*\nQuota Totale: €${importoTotale}\n- Cancelleria: €${quotaCancelleria}\n- VDB: €${quotaVDB}\nper ${nomeLupetto} per il mese di ${mese}. Grazie!`;
         if (telefono) {
             apriMessaggioWhatsApp(telefono, messaggio);
         }
 
         calcolaTotale(row);
+        calcolaTotale(rowMensili);
+        calcolaTotale(rowVDB);
         closeModal();
     }
 }

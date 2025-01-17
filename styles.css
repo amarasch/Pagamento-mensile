@@ -240,3 +240,36 @@ tbody tr:hover td {
         margin: 0;
     }
 }
+
+.table-container h2 {
+    color: #333;
+    margin: 20px 0;
+    padding: 10px;
+    background-color: #FFD700;
+    border-radius: 5px;
+}
+
+.quote-mensili,
+.quote-vdb {
+    margin-top: 30px;
+}
+
+/* Responsive per i titoli delle tabelle */
+@media screen and (max-width: 768px) {
+    .table-container h2 {
+        font-size: 18px;
+        padding: 8px;
+        margin: 15px 0;
+    }
+}
+
+/* Aggiornamento stili form per nuovi campi */
+#quotaCancelleria,
+#quotaVDB {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
