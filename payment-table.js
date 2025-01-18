@@ -1,5 +1,5 @@
 // Constants
-const QUOTA_MINIMA = 4;
+const QUOTA_MINIMA = 0;
 const ADMIN_PHONE = "+393407265193"; // Add the specific number here
 
 // DOM Elements
@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSavedData();
     quotaCancelleriaInput = document.getElementById('quotaCancelleria');
     quotaVDBInput = document.getElementById('quotaVDB');
+    localStorage.setItem('modifiche', '[]');
 });
 
 function setupSendChangesButton() {
@@ -114,7 +115,9 @@ async function inviaModifiche() {
     let messaggio = '*Riepilogo Pagamenti:*\n\n';
     modifiche.forEach(modifica => {
         // Uso la formattazione di WhatsApp per il testo
-        messaggio += `*${modifica.nomeLupetto}* (${modifica.nomeGenitore}): €${modifica.importo} per ${modifica.mese}\n`;
+        messaggio += ` *Conferma Pagamento*\nQuota Totale: €${modifica.importoTotale}\n- Cancelleria: €${modifica.quotaCancelleria}\n- VDB: €${modifica.quotaVDB}\nper ${modifica.nomeLupetto} per il mese di ${modifica.mese}. Grazie!\n`;
+       
+        
     });
 
     const confirmed = await showConfirmDialog(
@@ -125,7 +128,7 @@ async function inviaModifiche() {
     if (confirmed) {
         apriMessaggioWhatsApp(ADMIN_PHONE, messaggio);
         // Opzionale: pulisci le modifiche dopo l'invio
-        // localStorage.setItem('modifiche', '[]');
+        
     }
 }
 
@@ -244,10 +247,10 @@ async function handlePaymentSubmit(event) {
     const quotaVDB = parseFloat(quotaVDBInput.value);
     const importoTotale = quotaCancelleria + quotaVDB;
 
-    if (quotaCancelleria <= QUOTA_MINIMA || quotaVDB <= QUOTA_MINIMA) {
-        alert(`Ogni quota deve essere maggiore di €${QUOTA_MINIMA}.`);
-        return;
-    }
+    // if (quotaCancelleria <= QUOTA_MINIMA || quotaVDB <= QUOTA_MINIMA) {
+    //     alert(`Ogni quota deve essere maggiore di €${QUOTA_MINIMA}.`);
+    //     return;
+    // }
 
     const row = document.querySelector('table tbody').children[lupettoIndex];
     const nomeLupetto = row.cells[0].textContent;
