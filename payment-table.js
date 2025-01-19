@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSavedData();
     quotaCancelleriaInput = document.getElementById('quotaCancelleria');
     quotaVDBInput = document.getElementById('quotaVDB');
-    localStorage.setItem('modifiche', '[]');
 });
 
 function setupSendChangesButton() {
