@@ -127,7 +127,7 @@ async function inviaModifiche() {
     if (confirmed) {
         apriMessaggioWhatsApp(ADMIN_PHONE, messaggio);
         // Opzionale: pulisci le modifiche dopo l'invio
-        
+        modifiche = [];
     }
 }
 
