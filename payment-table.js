@@ -112,7 +112,7 @@ async function inviaModifiche() {
     }
 
     let messaggio = '*Riepilogo Pagamenti:*\n\n';
-    modifiche.forEach(modifica => {
+        modifiche.forEach(modifica => {
         // Uso la formattazione di WhatsApp per il testo
         messaggio += ` *Conferma Pagamento*\nQuota Totale: €${modifica.importoTotale}\n- Cancelleria: €${modifica.quotaCancelleria}\n- VDB: €${modifica.quotaVDB}\nper ${modifica.nomeLupetto} per il mese di ${modifica.mese}. Grazie!\n`;
        
@@ -124,10 +124,13 @@ async function inviaModifiche() {
         'Conferma Invio'
     );
 
+    
     if (confirmed) {
+
         apriMessaggioWhatsApp(ADMIN_PHONE, messaggio);
         // Opzionale: pulisci le modifiche dopo l'invio
-        modifiche = [];
+        localStorage.removeItem('modifiche');
+        
     }
 }
 
