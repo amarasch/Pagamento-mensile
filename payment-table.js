@@ -114,7 +114,7 @@ async function inviaModifiche() {
     let messaggio = '*Riepilogo Pagamenti:*\n\n';
         modifiche.forEach(modifica => {
         // Uso la formattazione di WhatsApp per il testo
-        messaggio += ` *Conferma Pagamento*\nQuota Totale: €${modifica.importoTotale}\n- Cancelleria: €${modifica.quotaCancelleria}\n- VDB: €${modifica.quotaVDB}\nper ${modifica.nomeLupetto} per il mese di ${modifica.mese}. Grazie!\n <br>`;
+        messaggio += ` *Conferma Pagamento*\nQuota Totale: €${modifica.importoTotale}\n- Cancelleria: €${modifica.quotaCancelleria}\n- VDB: €${modifica.quotaVDB}\nper ${modifica.nomeLupetto} per il mese di ${modifica.mese}. Grazie!\n\n ` ;
        
         
     });
