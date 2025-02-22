@@ -377,23 +377,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Aggiungi bottone reset
-    const button = document.createElement('button');
-    button.textContent = 'Cancella Tutti i Pagamenti Eventi';
-    button.setAttribute('data-label', 'reset-button');
-    
-    button.addEventListener('click', async () => {
-        if (confirm('Sei sicuro di voler cancellare tutti i pagamenti eventi?')) {
-            eventiCells.forEach(cell => {
-                cell.innerHTML = '';
-                cell.style.color = '';
-                cell.style.fontWeight = '';
-                const nomeLupetto = cell.parentElement.cells[0].textContent;
-                localStorage.removeItem(`evento_${nomeLupetto}`);
-            });
-        }
-    });
-    
 });
 
 function toggleEventoPagato(event) {
@@ -426,7 +409,7 @@ function creaPulsanteCancella() {
         );
         
         if (confirmed) {
-            const cells = document.querySelectorAll('.eventi-cell');
+            const cells = document.querySelectorAll('[data-label="Pagamento Eventi"]');
             cells.forEach(cell => {
                 cell.innerHTML = '';
                 cell.style.color = '';
