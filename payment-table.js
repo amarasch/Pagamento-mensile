@@ -18,8 +18,10 @@ let modifiche = [];
 document.addEventListener('DOMContentLoaded', () => {
     initializeModal();
     loadSavedData();
+    creaPulsanteCancella();
     quotaCancelleriaInput = document.getElementById('quotaCancelleria');
     quotaVDBInput = document.getElementById('quotaVDB');
+
 });
 
 function setupSendChangesButton() {
@@ -357,3 +359,84 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     document.head.appendChild(styleTag);
 });
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Gestione click sulle celle eventi
+    const eventiCells = document.querySelectorAll('[data-label="Pagamento Eventi"]');
+    eventiCells.forEach(cell => {
+        cell.addEventListener('click', toggleEventoPagato);
+        
+        // Recupera stato salvato
+        const nomeLupetto = cell.parentElement.cells[0].textContent;
+        const statoPagamento = localStorage.getItem(`evento_${nomeLupetto}`);
+        if (statoPagamento === 'true') {
+            cell.innerHTML = '✓';
+            cell.style.color = 'green';
+            cell.style.fontWeight = 'bold';
+        }
+    });
+
+    // Aggiungi bottone reset
+    const button = document.createElement('button');
+    button.textContent = 'Cancella Tutti i Pagamenti Eventi';
+    button.setAttribute('data-label', 'reset-button');
+    
+    button.addEventListener('click', async () => {
+        if (confirm('Sei sicuro di voler cancellare tutti i pagamenti eventi?')) {
+            eventiCells.forEach(cell => {
+                cell.innerHTML = '';
+                cell.style.color = '';
+                cell.style.fontWeight = '';
+                const nomeLupetto = cell.parentElement.cells[0].textContent;
+                localStorage.removeItem(`evento_${nomeLupetto}`);
+            });
+        }
+    });
+    
+});
+
+function toggleEventoPagato(event) {
+    const cell = event.target;
+    const nomeLupetto = cell.parentElement.cells[0].textContent;
+    
+    if (cell.innerHTML === '✓') {
+        cell.innerHTML = '';
+        cell.style.color = '';
+        cell.style.fontWeight = '';
+        localStorage.removeItem(`evento_${nomeLupetto}`);
+    } else {
+        cell.innerHTML = '✓';
+        cell.style.color = 'green';
+        cell.style.fontWeight = 'bold';
+        localStorage.setItem(`evento_${nomeLupetto}`, 'true');
+    }
+}
+
+
+function creaPulsanteCancella() {
+    const button = document.createElement('button');
+    button.textContent = 'Cancella Tutti i Pagamenti Eventi';
+    button.className = 'reset-button';
+
+    button.addEventListener('click', async () => {
+        const confirmed = await showConfirmDialog(
+            'Sei sicuro di voler cancellare tutti i pagamenti eventi?',
+            'Conferma Cancellazione'
+        );
+        
+        if (confirmed) {
+            const cells = document.querySelectorAll('.eventi-cell');
+            cells.forEach(cell => {
+                cell.innerHTML = '';
+                cell.style.color = '';
+                cell.style.fontWeight = '';
+                const nomeLupetto = cell.parentElement.cells[0].textContent;
+                localStorage.removeItem(`evento_${nomeLupetto}`);
+            });
+        }
+    });
+    
+    const buttonContainer = document.querySelector('.button-container');
+    buttonContainer.appendChild(button);
+}

@@ -273,3 +273,28 @@ tbody tr:hover td {
     font-size: 16px;
     margin-bottom: 10px;
 }
+
+.eventi-cell {
+    cursor: pointer;
+    text-align: center;
+    font-size: 18px;
+    transition: background-color 0.2s;
+}
+.eventi-cell:hover {
+    background-color: #f0f0f0;
+}
+.reset-button:hover {
+    background-color: #ff0000;
+}
+
+.reset-button{
+    margin-top: 10px;
+    margin-left: 10px;
+    padding: 12px 20px;
+    background-color: rgb(255, 68, 68);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
