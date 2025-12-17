@@ -194,8 +194,6 @@ async function handlePaymentSubmit(event) {
         // Salva SUBITO su Firebase
         await saveTableData();
         
-        alert('✅ Pagamento salvato ONLINE! Visibile da tutti i dispositivi.');
-
         const messaggio = `*Conferma Pagamento*\nQuota Totale: €${importoTotale}\n- Cancelleria: €${quotaCancelleria}\n- VDB: €${quotaVDB}\nper ${nomeLupetto} per il mese di ${mese}. Grazie!`;
         if (telefono) {
             apriMessaggioWhatsApp(telefono, messaggio);
@@ -297,28 +295,28 @@ function toggleEventoPagato(event) {
     }
 }
 
-function creaPulsanteCancella() {
-    const button = document.createElement('button');
-    button.textContent = 'Cancella Tutti i Pagamenti Eventi';
-    button.className = 'reset-button';
+// function creaPulsanteCancella() {
+//     const button = document.createElement('button');
+//     button.textContent = 'Cancella Tutti i Pagamenti Eventi';
+//     button.className = 'reset-button';
 
-    button.addEventListener('click', async () => {
-        const confirmed = await showConfirmDialog(
-            'Sei sicuro di voler cancellare tutti i pagamenti eventi?',
-            'Conferma Cancellazione'
-        );
+//     button.addEventListener('click', async () => {
+//         const confirmed = await showConfirmDialog(
+//             'Sei sicuro di voler cancellare tutti i pagamenti eventi?',
+//             'Conferma Cancellazione'
+//         );
         
-        if (confirmed) {
-            const cells = document.querySelectorAll('[data-label="Pagamento Eventi"]');
-            cells.forEach(cell => {
-                cell.innerHTML = '';
-                cell.style.color = '';
-                cell.style.fontWeight = '';
-            });
-            alert('✅ Tutti i pagamenti eventi cancellati!');
-        }
-    });
+//         if (confirmed) {
+//             const cells = document.querySelectorAll('[data-label="Pagamento Eventi"]');
+//             cells.forEach(cell => {
+//                 cell.innerHTML = '';
+//                 cell.style.color = '';
+//                 cell.style.fontWeight = '';
+//             });
+//             alert('✅ Tutti i pagamenti eventi cancellati!');
+//         }
+//     });
     
-    const buttonContainer = document.querySelector('.button-container');
-    buttonContainer.appendChild(button);
-}
+//     const buttonContainer = document.querySelector('.button-container');
+//     buttonContainer.appendChild(button);
+// }
