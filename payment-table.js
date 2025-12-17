@@ -1,6 +1,6 @@
 // Constants
 const QUOTA_MINIMA = 0;
-const ADMIN_PHONE = "+393407265193"; // Add the specific number here
+const ADMIN_PHONE = "+393407265193";
 
 // DOM Elements
 let paymentModal;
@@ -11,9 +11,6 @@ let importoInput;
 let quotaCancelleriaInput;
 let quotaVDBInput;
 
-// Track changes
-let modifiche = [];
-
 // Initialize when the document is ready
 document.addEventListener('DOMContentLoaded', () => {
     initializeModal();
@@ -21,190 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
     creaPulsanteCancella();
     quotaCancelleriaInput = document.getElementById('quotaCancelleria');
     quotaVDBInput = document.getElementById('quotaVDB');
-
+    setupSearchInput();
+    setupEventiCells();
 });
 
-function setupSendChangesButton() {
-    const button = document.createElement('button');
-    button.id = 'sendChangesBtn';
-    button.className = 'send-changes-btn';
-    button.textContent = 'Invia Modifiche';
-    button.onclick = inviaModifiche;
-    
-    const buttonContainer = document.querySelector('.button-container');
-    buttonContainer.appendChild(button);
-}
-
-function saveToLocalStorage() {
-    const table = document.querySelector('table');
-    const rows = table.querySelectorAll('tbody tr');
-    const data = {};
-
-    rows.forEach(row => {
-        const nomeLupetto = row.cells[0].textContent;
-        const pagamenti = {};
-        
-        // Save payments for each month (columns 3-8)
-        for (let i = 3; i <= 8; i++) {
-            const mese = table.querySelector(`thead th:nth-child(${i + 1})`).textContent;
-            const value = row.cells[i].textContent.replace('€', '').trim();
-            if (value) {
-                pagamenti[mese] = value;
-            }
-        }
-        
-        if (Object.keys(pagamenti).length > 0) {
-            data[nomeLupetto] = pagamenti;
-        }
-    });
-
-    localStorage.setItem('paymentData', JSON.stringify(data));
-}
-
-function loadSavedData() {
-    const data = JSON.parse(localStorage.getItem('tableData') || '{}');
-    const tables = {
-        principale: document.querySelector('table'),
-        mensili: document.querySelector('.quote-mensili'),
-        vdb: document.querySelector('.quote-vdb')
-    };
-
-    for (let [key, table] of Object.entries(tables)) {
-        const rows = table.querySelectorAll('tbody tr');
-        rows.forEach(row => {
-            const nomeLupetto = row.cells[0].textContent;
-            const savedData = data[key]?.[nomeLupetto];
-            
-            if (savedData) {
-                Object.entries(savedData).forEach(([mese, value]) => {
-                    const cellIndex = Array.from(table.querySelector('thead tr').cells)
-                        .findIndex(cell => cell.textContent === mese);
-                    
-                    if (cellIndex >= 0) {
-                        row.cells[cellIndex].textContent = `€${value}`;
-                    }
-                });
-                calcolaTotale(row);
-            }
-        });
-    }
-}
-
-// Modifica la funzione apriMessaggioSMS per usare WhatsApp
-function apriMessaggioWhatsApp(numeroDestinatario, messaggio) {
-    // Rimuovi eventuali spazi o caratteri speciali dal numero
-    const numeroFormattato = numeroDestinatario.replace(/\s+/g, '');
-    // Rimuovi il + iniziale se presente
-    const numeroPulito = numeroFormattato.replace('+', '');
-    
-    // Crea il link per WhatsApp
-    const encodedMessage = encodeURIComponent(messaggio);
-    const whatsappUrl = `https://wa.me/${numeroPulito}?text=${encodedMessage}`;
-    
-    // Apri WhatsApp in una nuova finestra
-    window.open(whatsappUrl, '_blank');
-}
-
-async function inviaModifiche() {
-    const modifiche = getStoredModifiche();
-    
-    if (modifiche.length === 0) {
-        alert('Non ci sono modifiche da inviare.');
-        return;
-    }
-
-    let messaggio = '*Riepilogo Pagamenti:*\n\n';
-        modifiche.forEach(modifica => {
-        // Uso la formattazione di WhatsApp per il testo
-        messaggio += ` *Conferma Pagamento*\nQuota Totale: €${modifica.importoTotale}\n- Cancelleria: €${modifica.quotaCancelleria}\n- VDB: €${modifica.quotaVDB}\nper ${modifica.nomeLupetto} per il mese di ${modifica.mese}. Grazie!\n\n ` ;
-       
-        
-    });
-
-    const confirmed = await showConfirmDialog(
-        'Vuoi inviare tutte le modifiche tramite WhatsApp?',
-        'Conferma Invio'
-    );
-
-    
-    if (confirmed) {
-
-        apriMessaggioWhatsApp(ADMIN_PHONE, messaggio);
-        // Opzionale: pulisci le modifiche dopo l'invio
-        localStorage.removeItem('modifiche');
-        
-    }
-}
-
-
-function getStoredModifiche() {
-    return JSON.parse(localStorage.getItem('modifiche') || '[]');
-}
-
-function saveModifica(nomeLupetto, nomeGenitore, mese, importoTotale, quotaCancelleria, quotaVDB) {
-    let modifiche = getStoredModifiche();
-    modifiche.push({
-        nomeLupetto,
-        nomeGenitore,
-        mese,
-        importoTotale,
-        quotaCancelleria,
-        quotaVDB
-    });
-    localStorage.setItem('modifiche', JSON.stringify(modifiche));
-}
-
-
-function initializeModal() {
-    paymentModal = document.getElementById('paymentInputModal');
-    paymentForm = document.getElementById('paymentForm');
-    lupettoSelect = document.getElementById('selectLupetto');
-    meseSelect = document.getElementById('selectMese');
-    importoInput = document.getElementById('importo');
-
-    document.getElementById('openPaymentModal').addEventListener('click', openModal);
-    document.querySelector('.close-button').addEventListener('click', closeModal);
-    document.querySelector('.cancel-btn').addEventListener('click', closeModal);
-    document.getElementById('sendChangesBtn').addEventListener('click', inviaModifiche);
-    paymentForm.addEventListener('submit', handlePaymentSubmit);
-
-    window.addEventListener('click', (event) => {
-        if (event.target === paymentModal) {
-            closeModal();
-        }
-    });
-
-    populateLupettoOptions();
-}
-
-function populateLupettoOptions() {
-    const table = document.querySelector('table');
-    const rows = table.querySelectorAll('tbody tr');
-    lupettoSelect.innerHTML = '<option value="">Seleziona un lupetto</option>';
-
-    rows.forEach((row, index) => {
-        const nomeLupetto = row.cells[0].textContent.trim();
-        if (nomeLupetto) {
-            const option = document.createElement('option');
-            option.value = index;
-            option.textContent = nomeLupetto;
-            lupettoSelect.appendChild(option);
-        }
-    });
-}
-
-function openModal() {
-    paymentModal.style.display = 'block';
-    populateLupettoOptions(); // Refresh options
-    paymentForm.reset();
-}
-
-function closeModal() {
-    paymentModal.style.display = 'none';
-    paymentForm.reset();
-}
-
-function saveTableData() {
+async function saveTableData() {
     const tables = {
         principale: document.querySelector('table'),
         mensili: document.querySelector('.quote-mensili'),
@@ -237,10 +55,109 @@ function saveTableData() {
         });
     }
 
-    localStorage.setItem('tableData', JSON.stringify(data));
+    // Salva su Firebase
+    try {
+        await window.db.collection('pagamenti').doc('tableData').set({
+            data: data,
+            lastUpdate: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.log('✅ Dati salvati su Firebase');
+    } catch (error) {
+        console.error('❌ Errore salvataggio Firebase:', error);
+        alert('Errore nel salvataggio online. Riprova.');
+    }
 }
 
+async function loadSavedData() {
+    try {
+        const doc = await window.db.collection('pagamenti').doc('tableData').get();
+        
+        if (!doc.exists) {
+            console.log('Nessun dato online disponibile');
+            return;
+        }
+        
+        const data = doc.data().data;
+        
+        const tables = {
+            principale: document.querySelector('table'),
+            mensili: document.querySelector('.quote-mensili'),
+            vdb: document.querySelector('.quote-vdb')
+        };
 
+        for (let [key, table] of Object.entries(tables)) {
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const nomeLupetto = row.cells[0].textContent;
+                const savedData = data[key]?.[nomeLupetto];
+                
+                if (savedData) {
+                    Object.entries(savedData).forEach(([mese, value]) => {
+                        const cellIndex = Array.from(table.querySelector('thead tr').cells)
+                            .findIndex(cell => cell.textContent === mese);
+                        
+                        if (cellIndex >= 0) {
+                            row.cells[cellIndex].textContent = `€${value}`;
+                        }
+                    });
+                    calcolaTotale(row);
+                }
+            });
+        }
+        
+        console.log('✅ Dati caricati da Firebase');
+    } catch (error) {
+        console.error('Errore caricamento dati:', error);
+    }
+}
+
+function initializeModal() {
+    paymentModal = document.getElementById('paymentInputModal');
+    paymentForm = document.getElementById('paymentForm');
+    lupettoSelect = document.getElementById('selectLupetto');
+    meseSelect = document.getElementById('selectMese');
+    importoInput = document.getElementById('importo');
+
+    document.getElementById('openPaymentModal').addEventListener('click', openModal);
+    document.querySelector('.close-button').addEventListener('click', closeModal);
+    document.querySelector('.cancel-btn').addEventListener('click', closeModal);
+    paymentForm.addEventListener('submit', handlePaymentSubmit);
+
+    window.addEventListener('click', (event) => {
+        if (event.target === paymentModal) {
+            closeModal();
+        }
+    });
+
+    populateLupettoOptions();
+}
+
+function populateLupettoOptions() {
+    const table = document.querySelector('table');
+    const rows = table.querySelectorAll('tbody tr');
+    lupettoSelect.innerHTML = '<option value="">Seleziona un lupetto</option>';
+
+    rows.forEach((row, index) => {
+        const nomeLupetto = row.cells[0].textContent.trim();
+        if (nomeLupetto) {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = nomeLupetto;
+            lupettoSelect.appendChild(option);
+        }
+    });
+}
+
+function openModal() {
+    paymentModal.style.display = 'block';
+    populateLupettoOptions();
+    paymentForm.reset();
+}
+
+function closeModal() {
+    paymentModal.style.display = 'none';
+    paymentForm.reset();
+}
 
 async function handlePaymentSubmit(event) {
     event.preventDefault();
@@ -251,11 +168,6 @@ async function handlePaymentSubmit(event) {
     const quotaVDB = parseFloat(quotaVDBInput.value);
     const importoTotale = quotaCancelleria + quotaVDB;
 
-    // if (quotaCancelleria <= QUOTA_MINIMA || quotaVDB <= QUOTA_MINIMA) {
-    //     alert(`Ogni quota deve essere maggiore di €${QUOTA_MINIMA}.`);
-    //     return;
-    // }
-
     const row = document.querySelector('table tbody').children[lupettoIndex];
     const nomeLupetto = row.cells[0].textContent;
     const nomeGenitore = row.cells[1].textContent;
@@ -263,7 +175,7 @@ async function handlePaymentSubmit(event) {
     const mese = document.querySelector(`table thead th:nth-child(${meseIndex + 1})`).textContent;
 
     const confirmed = await showConfirmDialog(
-        `Confermi l'inserimento delle quote:\nCancelleria: €${quotaCancelleria}\nVDB: €${quotaVDB}\nTotale: €${importoTotale}\nper ${nomeLupetto}?`,
+        `Confermi l'inserimento delle quote:\nCancelleria: €${quotaCancelleria}\nVDB: €${quotaVDB}\nTotale: €${importoTotale}\nper ${nomeLupetto}?\n\n⚠️ Sarà salvato ONLINE immediatamente!`,
         "Conferma Pagamento"
     );
 
@@ -279,8 +191,10 @@ async function handlePaymentSubmit(event) {
         const rowVDB = document.querySelector('.quote-vdb tbody').children[lupettoIndex];
         rowVDB.cells[meseIndex].textContent = `€${quotaVDB}`;
         
-        saveModifica(nomeLupetto, nomeGenitore, mese, importoTotale, quotaCancelleria, quotaVDB);
-        saveTableData();
+        // Salva SUBITO su Firebase
+        await saveTableData();
+        
+        alert('✅ Pagamento salvato ONLINE! Visibile da tutti i dispositivi.');
 
         const messaggio = `*Conferma Pagamento*\nQuota Totale: €${importoTotale}\n- Cancelleria: €${quotaCancelleria}\n- VDB: €${quotaVDB}\nper ${nomeLupetto} per il mese di ${mese}. Grazie!`;
         if (telefono) {
@@ -305,10 +219,12 @@ function calcolaTotale(row) {
     row.cells[9].textContent = `€${totale}`;
 }
 
-function apriMessaggioSMS(numeroDestinatario, messaggio) {
+function apriMessaggioWhatsApp(numeroDestinatario, messaggio) {
+    const numeroFormattato = numeroDestinatario.replace(/\s+/g, '');
+    const numeroPulito = numeroFormattato.replace('+', '');
     const encodedMessage = encodeURIComponent(messaggio);
-    const url = `sms:${numeroDestinatario}?body=${encodedMessage}`;
-    window.location.href = url;
+    const whatsappUrl = `https://wa.me/${numeroPulito}?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
 }
 
 function showConfirmDialog(message, title) {
@@ -317,9 +233,8 @@ function showConfirmDialog(message, title) {
         resolve(confirmed);
     });
 }
-// Aggiungi funzionalità di ricerca alla tabella
 
-document.addEventListener('DOMContentLoaded', () => {
+function setupSearchInput() {
     const searchInput = document.createElement('input');
     searchInput.type = 'text';
     searchInput.placeholder = 'Cerca...';
@@ -358,44 +273,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     `;
     document.head.appendChild(styleTag);
-});
+}
 
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Gestione click sulle celle eventi
+function setupEventiCells() {
+    // Gestione click sulle celle eventi - solo mostra/nascondi spunta
     const eventiCells = document.querySelectorAll('[data-label="Pagamento Eventi"]');
     eventiCells.forEach(cell => {
         cell.addEventListener('click', toggleEventoPagato);
-        
-        // Recupera stato salvato
-        const nomeLupetto = cell.parentElement.cells[0].textContent;
-        const statoPagamento = localStorage.getItem(`evento_${nomeLupetto}`);
-        if (statoPagamento === 'true') {
-            cell.innerHTML = '✓';
-            cell.style.color = 'green';
-            cell.style.fontWeight = 'bold';
-        }
     });
-
-});
+}
 
 function toggleEventoPagato(event) {
     const cell = event.target;
-    const nomeLupetto = cell.parentElement.cells[0].textContent;
     
     if (cell.innerHTML === '✓') {
         cell.innerHTML = '';
         cell.style.color = '';
         cell.style.fontWeight = '';
-        localStorage.removeItem(`evento_${nomeLupetto}`);
     } else {
         cell.innerHTML = '✓';
         cell.style.color = 'green';
         cell.style.fontWeight = 'bold';
-        localStorage.setItem(`evento_${nomeLupetto}`, 'true');
     }
 }
-
 
 function creaPulsanteCancella() {
     const button = document.createElement('button');
@@ -414,9 +314,8 @@ function creaPulsanteCancella() {
                 cell.innerHTML = '';
                 cell.style.color = '';
                 cell.style.fontWeight = '';
-                const nomeLupetto = cell.parentElement.cells[0].textContent;
-                localStorage.removeItem(`evento_${nomeLupetto}`);
             });
+            alert('✅ Tutti i pagamenti eventi cancellati!');
         }
     });
     
