@@ -10,10 +10,15 @@ let meseSelect;
 let importoInput;
 let quotaCancelleriaInput;
 let quotaVDBInput;
+let deletePaymentModal;
+let deletePaymentForm;
+let lupettoSelectDelete;
+let meseSelectDelete;
 
 // Initialize when the document is ready
 document.addEventListener('DOMContentLoaded', () => {
     initializeModal();
+    initializeDeleteModal(); 
     loadSavedData();
     creaPulsanteCancella();
     quotaCancelleriaInput = document.getElementById('quotaCancelleria');
@@ -157,6 +162,97 @@ function openModal() {
 function closeModal() {
     paymentModal.style.display = 'none';
     paymentForm.reset();
+}
+
+function initializeDeleteModal() {
+    deletePaymentModal = document.getElementById('deletePaymentModal');
+    deletePaymentForm = document.getElementById('deletePaymentForm');
+    lupettoSelectDelete = document.getElementById('selectLupettoDelete');
+    meseSelectDelete = document.getElementById('selectMeseDelete');
+
+    document.getElementById('openDeleteModal').addEventListener('click', openDeleteModal);
+    document.querySelector('.close-button-delete').addEventListener('click', closeDeleteModal);
+    document.querySelector('.cancel-btn-delete').addEventListener('click', closeDeleteModal);
+    deletePaymentForm.addEventListener('submit', handleDeletePaymentSubmit);
+
+    window.addEventListener('click', (event) => {
+        if (event.target === deletePaymentModal) {
+            closeDeleteModal();
+        }
+    });
+}
+
+function openDeleteModal() {
+    deletePaymentModal.style.display = 'block';
+    populateLupettoDeleteOptions();
+    deletePaymentForm.reset();
+}
+
+function closeDeleteModal() {
+    deletePaymentModal.style.display = 'none';
+    deletePaymentForm.reset();
+}
+
+function populateLupettoDeleteOptions() {
+    const table = document.querySelector('table');
+    const rows = table.querySelectorAll('tbody tr');
+    lupettoSelectDelete.innerHTML = '<option value="">Seleziona un lupetto</option>';
+
+    rows.forEach((row, index) => {
+        const nomeLupetto = row.cells[0].textContent.trim();
+        if (nomeLupetto) {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = nomeLupetto;
+            lupettoSelectDelete.appendChild(option);
+        }
+    });
+}
+
+async function handleDeletePaymentSubmit(event) {
+    event.preventDefault();
+
+    const lupettoIndex = parseInt(lupettoSelectDelete.value);
+    const meseIndex = parseInt(meseSelectDelete.value);
+
+    const row = document.querySelector('table tbody').children[lupettoIndex];
+    const nomeLupetto = row.cells[0].textContent;
+    const mese = document.querySelector(`table thead th:nth-child(${meseIndex + 1})`).textContent;
+    
+    // Verifica se c'è un pagamento da cancellare
+    const currentValue = row.cells[meseIndex].textContent.trim();
+    if (!currentValue || currentValue === '') {
+        alert('⚠️ Non c\'è nessun pagamento da cancellare per questo lupetto in questo mese!');
+        return;
+    }
+
+    const confirmed = await showConfirmDialog(
+        `Sei sicuro di voler cancellare il pagamento di ${currentValue} per ${nomeLupetto} nel mese di ${mese}?\n\n⚠️ Sarà cancellato ONLINE immediatamente!`,
+        "Conferma Cancellazione"
+    );
+
+    if (confirmed) {
+        // Cancella dalla tabella principale
+        row.cells[meseIndex].textContent = '';
+        
+        // Cancella dalla tabella quote mensili
+        const rowMensili = document.querySelector('.quote-mensili tbody').children[lupettoIndex];
+        rowMensili.cells[meseIndex].textContent = '';
+        
+        // Cancella dalla tabella quote vdb
+        const rowVDB = document.querySelector('.quote-vdb tbody').children[lupettoIndex];
+        rowVDB.cells[meseIndex].textContent = '';
+        
+        // Salva SUBITO su Firebase
+        await saveTableData();
+        
+        alert('✅ Pagamento cancellato ONLINE! Modifica visibile da tutti i dispositivi.');
+
+        calcolaTotale(row);
+        calcolaTotale(rowMensili);
+        calcolaTotale(rowVDB);
+        closeDeleteModal();
+    }
 }
 
 async function handlePaymentSubmit(event) {

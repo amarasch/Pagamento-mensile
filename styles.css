@@ -298,3 +298,65 @@ tbody tr:hover td {
     cursor: pointer;
     font-size: 16px;
 }
+
+.delete-payment-btn {
+    padding: 12px 20px;
+    background-color: #ff9800;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-left: 10px;
+}
+
+.delete-payment-btn:hover {
+    background-color: #f57c00;
+}
+
+/* Stili per i bottoni del modale di cancellazione */
+.close-button-delete {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+}
+
+.close-button-delete:hover {
+    color: #000;
+}
+
+.cancel-btn-delete {
+    padding: 8px 16px;
+    margin-left: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    background-color: #f44336;
+    color: white;
+}
+
+.cancel-btn-delete:hover {
+    background-color: #da190b;
+}
+
+/* Responsive per mobile */
+@media screen and (max-width: 768px) {
+    .button-container {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .add-payment-btn,
+    .delete-payment-btn,
+    .send-changes-btn,
+    .reset-button {
+        width: 100%;
+        margin: 0;
+    }
+}

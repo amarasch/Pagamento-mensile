@@ -12,6 +12,7 @@
     <header>
         <div class="button-container">
             <button id="openPaymentModal" class="add-payment-btn">Aggiungi Pagamento</button>
+            <button id="openDeleteModal" class="delete-payment-btn">Cancella Pagamento</button>
             <!-- <button id="sendChangesBtn" class="send-changes-btn">Invia Modifiche</button> -->
         </div>
     </header>
@@ -1083,6 +1084,37 @@
                 </div>
             </form>
         </div>
+
+        <!-- Delete Payment Modal -->
+        <div id="deletePaymentModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button-delete">&times;</span>
+                <h2>Cancella Pagamento</h2>
+                <form id="deletePaymentForm">
+                    <div class="form-group">
+                        <label for="selectLupettoDelete">Seleziona Lupetto:</label>
+                        <select id="selectLupettoDelete" required>
+                            <!-- Opzioni generate dinamicamente -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="selectMeseDelete">Seleziona Mese:</label>
+                        <select id="selectMeseDelete" required>
+                            <option value="3">Gennaio</option>
+                            <option value="4">Febbraio</option>
+                            <option value="5">Marzo</option>
+                            <option value="6">Aprile</option>
+                            <option value="7">Maggio</option>
+                            <option value="8">Giugno</option>
+                        </select>
+                    </div>
+                    <div class="form-buttons">
+                        <button type="submit" class="confirm-btn">Cancella</button>
+                        <button type="button" class="cancel-btn-delete">Annulla</button>
+                    </div>
+                </form>
+            </div>
+        </div>       
         
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
