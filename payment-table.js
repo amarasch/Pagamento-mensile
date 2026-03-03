@@ -41,15 +41,18 @@ async function saveTableData() {
     };
 
     for (let [key, table] of Object.entries(tables)) {
+        const headerCells = Array.from(table.querySelectorAll('thead th'));
         const rows = table.querySelectorAll('tbody tr');
         rows.forEach(row => {
-            const nomeLupetto = row.cells[0].textContent;
+            const nomeLupetto = row.cells[0].textContent.trim();
             const pagamenti = {};
             
+            // Itera sulle celle della riga usando l'header come riferimento
             for (let i = 3; i <= 8; i++) {
-                const mese = table.querySelector(`thead th:nth-child(${i + 1})`).textContent;
-                const value = row.cells[i].textContent.replace('€', '').trim();
-                if (value) {
+                if (!headerCells[i]) continue;
+                const mese = headerCells[i].textContent.trim();
+                const value = row.cells[i] ? row.cells[i].textContent.replace('€', '').trim() : '';
+                if (value && value !== '') {
                     pagamenti[mese] = value;
                 }
             }
@@ -91,17 +94,17 @@ async function loadSavedData() {
         };
 
         for (let [key, table] of Object.entries(tables)) {
+            const headerCells = Array.from(table.querySelectorAll('thead th'));
             const rows = table.querySelectorAll('tbody tr');
             rows.forEach(row => {
-                const nomeLupetto = row.cells[0].textContent;
+                const nomeLupetto = row.cells[0].textContent.trim();
                 const savedData = data[key]?.[nomeLupetto];
                 
                 if (savedData) {
                     Object.entries(savedData).forEach(([mese, value]) => {
-                        const cellIndex = Array.from(table.querySelector('thead tr').cells)
-                            .findIndex(cell => cell.textContent === mese);
+                        const cellIndex = headerCells.findIndex(cell => cell.textContent.trim() === mese);
                         
-                        if (cellIndex >= 0) {
+                        if (cellIndex >= 0 && row.cells[cellIndex]) {
                             row.cells[cellIndex].textContent = `€${value}`;
                         }
                     });
@@ -286,20 +289,25 @@ async function handlePaymentSubmit(event) {
         // Aggiorna la tabella quote vdb
         const rowVDB = document.querySelector('.quote-vdb tbody').children[lupettoIndex];
         rowVDB.cells[meseIndex].textContent = `€${quotaVDB}`;
+
+        calcolaTotale(row);
+        calcolaTotale(rowMensili);
+        calcolaTotale(rowVDB);
+
+        // Apri WhatsApp PRIMA dell'await (altrimenti Safari/iOS blocca il popup)
+        const messaggio = `*Conferma Pagamento*\nQuota Totale: €${importoTotale}\n- Cancelleria: €${quotaCancelleria}\n- VDB: €${quotaVDB}\nper ${nomeLupetto} per il mese di ${mese}. Grazie!`;
+        let whatsappWindow = null;
+        if (telefono) {
+            const numeroFormattato = telefono.replace(/\s+/g, '').replace('+', '');
+            const encodedMessage = encodeURIComponent(messaggio);
+            whatsappWindow = window.open(`https://wa.me/${numeroFormattato}?text=${encodedMessage}`, '_blank');
+        }
         
         // Salva SUBITO su Firebase
         await saveTableData();
         
         alert('✅ Pagamento salvato ONLINE! Visibile da tutti i dispositivi.');
 
-        const messaggio = `*Conferma Pagamento*\nQuota Totale: €${importoTotale}\n- Cancelleria: €${quotaCancelleria}\n- VDB: €${quotaVDB}\nper ${nomeLupetto} per il mese di ${mese}. Grazie!`;
-        if (telefono) {
-            apriMessaggioWhatsApp(telefono, messaggio);
-        }
-
-        calcolaTotale(row);
-        calcolaTotale(rowMensili);
-        calcolaTotale(rowVDB);
         closeModal();
     }
 }
